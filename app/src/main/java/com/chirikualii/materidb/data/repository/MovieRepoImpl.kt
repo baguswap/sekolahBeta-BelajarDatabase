@@ -11,22 +11,12 @@ import com.google.gson.Gson
 class MovieRepoImpl(
     private val service: ApiService,
     private val  movieDbImpl: MovieDbImpl): MovieRepo {
-
     override suspend fun getPopularMovie(): List<Movie> {
        try {
            val response = service.getPopularMovie()
 
            if(response.isSuccessful){
                val listMovie = response.body()
-               val listData = listMovie?.results?.map {
-                   Movie(
-                       title = it.title,
-                       releaseDate = it.releaseDate,
-                       imagePoster = it.posterPath,
-                       overview = it.overview,
-                       backdrop = it.backdropPath
-                   )
-               }
                //mapping from api to entity
                val listMovieEntity = listMovie?.results?.map {
                    MovieEntity(
@@ -44,9 +34,9 @@ class MovieRepoImpl(
                    movieDbImpl.getDatabase().movieDao().insertMovie(it)
                }
                Log.d(MovieRepoImpl::class.simpleName,
-                   "getPopularMovie : ${Gson().toJsonTree(listData)}")
+                   "getPopularMovie : ${Gson().toJsonTree(listMovieEntity)}")
 
-               return listData ?: emptyList()
+               return getPopularMovieLocal() ?: emptyList()
            }else{
                Log.e(MovieRepoImpl::class.simpleName,
                    "getPopularMovie error code: ${response.code()}", )
@@ -85,6 +75,30 @@ class MovieRepoImpl(
         }catch (e:Exception){
             Log.e(MovieRepoImpl::class.simpleName, "getNowPlayingMovie error :${e.message} ", )
             return emptyList()
+        }
+    }
+
+    override suspend fun getPopularMovieLocal(): List<Movie> {
+        var listData = listOf<Movie>()
+        try {
+           listData = movieDbImpl.getDatabase().movieDao().getListMoviePopular(
+             MovieType.popular
+            ).map {
+                Movie(
+                    title = it.title,
+                    releaseDate = it.releaseDate,
+                    imagePoster = it.imagePoster,
+                    backdrop = it.backdrop,
+                    overview = it.overview
+
+
+                )
+           }
+            return listData
+
+        }catch (e:Exception){
+            Log.e(MovieRepoImpl::class.simpleName, "getPopularMovieLocal: error ${e.message}", )
+        return listData
         }
     }
 }
