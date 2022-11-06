@@ -6,4 +6,5 @@ interface MovieRepo {
     suspend fun getPopularMovie() : List<Movie>
     suspend fun getNowPlayingMovie() : List<Movie>
     suspend fun getPopularMovieLocal() : List<Movie>
+    suspend fun getNowPlayingLocal() : List<Movie>
 }
